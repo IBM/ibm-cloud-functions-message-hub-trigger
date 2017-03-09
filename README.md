@@ -16,6 +16,7 @@ Extract the API key and the REST URL endpoint from the "Service Credentials" tab
 
 ```bash
 # Bind Message Hub (Kafka) service as a package in OpenWhisk
+wsk package refresh
 wsk package create kafka
 wsk package bind kafka kafka-binding \
   --param api_key ${API_KEY} \
