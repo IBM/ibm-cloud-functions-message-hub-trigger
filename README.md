@@ -58,7 +58,7 @@ function main(params) {
 }
 ```
 
-## Create action sequence and map to trigger
+## Create action and map to trigger
 ```bash
 # Upload action above that responds to messages received
 wsk action create process-message process-message.js
