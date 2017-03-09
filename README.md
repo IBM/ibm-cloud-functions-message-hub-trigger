@@ -10,7 +10,7 @@ This example shows how to create an action that consumes Message Hub (Apache Kaf
 3. [Clean up](#3-clean-up)
 
 # 1. Configure Message Hub
-Log into Bluemix, provision a [Message Hub](https://console.ng.bluemix.net/catalog/services/message-hub) instance, and name it `kafka-broker`. On the "Manage" tab of the Message Hub console create a topic named "in-topic".
+Log into Bluemix, provision a [Message Hub](https://console.ng.bluemix.net/catalog/services/message-hub) instance, and name it `kafka-broker`. On the "Manage" tab of the Message Hub console create a topic named "cats-topic".
 
 Extract the API key and the REST URL endpoint from the "Service Credentials" tab in Bluemix. Use them in the commands below.
 
@@ -20,13 +20,13 @@ wsk package create kafka
 wsk package bind kafka kafka-binding \
   --param api_key ${API_KEY} \
   --param kafka_rest_url ${KAFKA_REST_URL} \
-  --param topic in-topic
+  --param topic cats-topic
 
 # Create trigger to fire events when messages (records) are received
 wsk trigger create message-received-trigger \
    --feed /_/Bluemix_kafka-broker_Credentials-1/messageHubFeed \
    --param isJSONData true \
-   --param topic in-topic
+   --param topic cats-topic
 ```
 
 # 2. Create OpenWhisk actions
@@ -45,8 +45,9 @@ function main(params) {
     for (var i = 0; i < msgs.length; i++) {
       var msg = msgs[i];
       for (var j = 0; j < msg.value.cats.length; j++) {
-        console.log(msg.value.cats[j].name);
-        cats.push(msg.value.cats[j].name);
+        var cat = msg.value.cats[j];
+        console.log('A ' + cat.color + ' cat named ' + cat.name + ' was received.');
+        cats.push(cat);
       }
     }
     resolve({
@@ -74,12 +75,13 @@ wsk activation poll
 
 In another terminal window, send a message to Kafka using its REST API.
 ```bash
-PAYLOAD=$( base64 '{"cats": [{"name": "Tahoma"}, {"name": "Tarball"}]}' )
+echo '{"cats": [{"name": "Tahoma", "color": "Tabby"}, {"name": "Tarball", "color": "Black"}]}' > cats.json
+PAYLOAD=$( base64 cats.json )
 DATA='{"records":[{"value":"'${PAYLOAD}'"}]}'
 curl -X POST -H "Content-Type: application/vnd.kafka.binary.v1+json" \
   -H "X-Auth-Token: $API_KEY" \
   --data "$DATA" \
-  "$KAFKA_REST_URL/topics/in-topic"
+  "$KAFKA_REST_URL/topics/cats-topic"
 ```
 
 View the OpenWhisk log to look for the change notification.
