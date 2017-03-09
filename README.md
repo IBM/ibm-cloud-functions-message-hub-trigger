@@ -3,7 +3,7 @@ Create Message Hub data processing apps with Apache OpenWhisk on IBM Bluemix. Th
 
 If you're not familiar with the OpenWhisk programming model [try the action, trigger, and rule sample first](https://github.com/IBM/openwhisk-action-trigger-rule). [You'll need a Bluemix account and the latest OpenWhisk command line tool](docs/OPENWHISK.md).
 
-This example shows how to create an action that consumes Message Hub (Kafka) messages.
+This example shows how to create an action that consumes Message Hub (Apache Kafka) messages (records).
 
 1. [Configure Message Hub](#1-configure-message-hub)
 2. [Create OpenWhisk actions](#2-create-openwhisk-actions)
@@ -16,12 +16,13 @@ Extract the API key and the REST URL endpoint from the "Service Credentials" tab
 
 ```bash
 # Bind Message Hub (Kafka) service as a package in OpenWhisk
-wsk package bind kafka kafka-out-binding \
+wsk package create kafka
+wsk package bind kafka kafka-binding \
   --param api_key ${API_KEY} \
   --param kafka_rest_url ${KAFKA_REST_URL} \
   --param topic in-topic
 
-# Create trigger to fire events when data is inserted
+# Create trigger to fire events when messages (records) are received
 wsk trigger create message-received-trigger \
    --feed /_/Bluemix_kafka-broker_Credentials-1/messageHubFeed \
    --param isJSONData true \
@@ -29,28 +30,30 @@ wsk trigger create message-received-trigger \
 ```
 
 # 2. Create OpenWhisk actions
-## Create a file named `process-change.js`
+## Create a file named `process-message.js`
 ```javascript
 function main(params) {
-  console.log("DEBUG: Received the following message as input: " + JSON.stringify(params));
+
+  console.log(params);
 
   return new Promise(function(resolve, reject) {
-    if (!params.messages || !params.messages[0] ||
-      !params.messages[0].value || !params.messages[0].value.events) {
+    if (!params.messages || !params.messages[0] || !params.messages[0].value) {
       reject("Invalid arguments. Must include 'messages' JSON array with 'value' field");
     }
     var msgs = params.messages;
-    var out = [];
+    var cats = [];
     for (var i = 0; i < msgs.length; i++) {
       var msg = msgs[i];
-      for (var j = 0; j < msg.value.events.length; j++) {
-        out.push(msg.value.events[j]);
+      for (var j = 0; j < msg.value.cats.length; j++) {
+        console.log(msg.value.cats[j].name);
+        cats.push(msg.value.cats[j].name);
       }
     }
     resolve({
-      "events": out
+      "cats": cats
     });
   });
+
 }
 ```
 
@@ -58,13 +61,6 @@ function main(params) {
 ```bash
 # Upload action above that responds to messages received
 wsk action create process-message process-message.js
-
-# Unit test the new action directly
-wsk action invoke \
-  --blocking \
-  --param name Tahoma \
-  --param color Tabby \
-  process-message
 
 # Create rule that maps database change trigger to sequence
 wsk rule create log-message-rule message-received-trigger process-message
@@ -78,7 +74,8 @@ wsk activation poll
 
 In another terminal window, send a message to Kafka using its REST API.
 ```bash
-DATA='{"records":[{"value":"'Tabby'"}]}'
+PAYLOAD=$( base64 '{"cats": [{"name": "Tahoma"}, {"name": "Tarball"}]}' )
+DATA='{"records":[{"value":"'${PAYLOAD}'"}]}'
 curl -X POST -H "Content-Type: application/vnd.kafka.binary.v1+json" \
   -H "X-Auth-Token: $API_KEY" \
   --data "$DATA" \
@@ -99,10 +96,10 @@ wsk rule delete log-message-rule
 wsk trigger delete message-received-trigger
 
 # Remove actions
-wsk action delete process-change
+wsk action delete process-message
 
 # Remove package
-wsk package delete kafka-out-binding
+wsk package delete kafka-binding
 ```
 
 # Troubleshooting
