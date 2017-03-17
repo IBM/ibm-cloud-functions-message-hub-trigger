@@ -10,13 +10,13 @@ This example shows how to create an action that consumes Message Hub (Apache Kaf
 3. [Clean up](#3-clean-up)
 
 # 1. Configure Message Hub
-Log into Bluemix, provision a [Message Hub](https://console.ng.bluemix.net/catalog/services/message-hub) instance, and name it `kafka-broker`. On the "Manage" tab of the Message Hub console create a topic named "cats-topic". Extract the API key and the REST URL endpoint from the "Service Credentials" tab in Bluemix. 
+Log into Bluemix, provision a [Message Hub](https://console.ng.bluemix.net/catalog/services/message-hub) instance, and name it `kafka-broker`. On the "Manage" tab of the Message Hub console create a topic named "cats-topic". Extract the API key and the REST URL endpoint from the "Service Credentials" tab in Bluemix and use them in place of the `API_KEY` and `KAFKA_REST_URL` variables below.
 
 In this demo, we will make use of the Kafka package, which contains a set of OpenWhisk actions and feeds that integrate with Kafka. Use the OpenWhisk CLI to bind the Kafka package using your credentials. Binding a package allows you to set the default parameters that are inherited by every action and feed in the package.
 
 ```bash
 # Bind Message Hub (Kafka) service as a package in OpenWhisk
-wsk package refresh
+wsk package refresh # This may show an error, it's safe to ignore
 wsk package create kafka
 wsk package bind kafka kafka-binding \
   --param api_key ${API_KEY} \
