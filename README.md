@@ -13,8 +13,8 @@ This example shows how to create an action that consumes Message Hub (Apache Kaf
 Log into Bluemix, provision a [Message Hub](https://console.ng.bluemix.net/catalog/services/message-hub) instance, and name it `openwhisk-kafka`. On the "Manage" tab of the Message Hub console create a topic named "cats-topic". Extract the API key and the REST URL endpoint from the "Service Credentials" tab in Bluemix and set these values as environment variables:
 
 ```bash
-export KAFKA_API_KEY="z3nFEaKqrRbuvLlSN1MFW0AOPteJaAMBhTAJBbB4Fpn1uaS2"
-export KAFKA_REST_URL="https://kafka-rest-prod01.messagehub.services.us-south.bluemix.net:443"
+export KAFKA_API_KEY=""
+export KAFKA_REST_URL=""
 export KAFKA_INSTANCE="openwhisk-kafka"
 export KAFKA_TOPIC="cats-topic"
 ```
