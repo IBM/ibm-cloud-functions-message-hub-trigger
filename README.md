@@ -8,10 +8,11 @@ If you're not familiar with the OpenWhisk programming model [try the action, tri
 This example shows how to create an action that consumes Message Hub (Apache Kafka) messages (records).
 
 1. [Configure Message Hub](#1-configure-message-hub)
-2. [Create OpenWhisk actions](#2-create-openwhisk-actions)
+2. [Create OpenWhisk actions, triggers, and rules](#2-create-openwhisk-actions-triggers-and-rules)
 3. [Clean up](#3-clean-up)
 
 # 1. Configure Message Hub
+## Provision an IBM Message Hub service instance
 Log into Bluemix, provision a [Message Hub](https://console.ng.bluemix.net/catalog/services/message-hub) instance, and name it `openwhisk-kafka`. On the "Manage" tab of the Message Hub console create a topic named "cats-topic". Set the corresponding names as environment variables in a terminal window:
 
 ```bash
@@ -19,6 +20,7 @@ export KAFKA_INSTANCE="openwhisk-kafka"
 export KAFKA_TOPIC="cats-topic"
 ```
 
+## Import the service credentials into the OpenWhisk environment
 We will make use of the built-in [OpenWhisk Kafka package](https://github.com/apache/incubator-openwhisk-package-kafka#producing-messages-to-message-hub), which contains a set of actions and feeds that integrate with both Apache Kafka and IBM Message Hub (based on Kafka).
 
 On Bluemix, this package can be automatically configured with the credentials and connection information from the Message Hub instance we provisioned above. We make it available by refreshing our list of packages.
@@ -28,6 +30,8 @@ On Bluemix, this package can be automatically configured with the credentials an
 wsk package refresh
 ```
 
+# 2. Create OpenWhisk actions, triggers, and rules
+## Attach a trigger to the Message Hub topic
 Triggers can be explicitly fired by a user or fired on behalf of a user by an external event source, such as a feed. Use the code below to create a trigger to fire events when messages are received using the "messageHubFeed" provided in the Message Hub package.
 
 ```bash
@@ -38,7 +42,7 @@ wsk trigger create message-received-trigger \
   --param topic "$KAFKA_TOPIC"
 ```
 
-# 2. Create OpenWhisk actions
+## Create an action to process messages from the topic
 Create a file named `process-message.js`. This file will define an OpenWhisk action written as a JavaScript function. This function will print out messages that are received from Kafka. For this example, we are expecting a stream of messages that contain a `cat` object with `name` and `color` fields.
 
 ```javascript
@@ -68,15 +72,15 @@ function main(params) {
 }
 ```
 
-## Create action and map to trigger
-Create an OpenWhisk action from the JavaScript function that we just created.
+Create an OpenWhisk action from the JavaScript function.
 ```bash
 wsk action create process-message process-message.js
 ```
 
-OpenWhisk actions are stateless code snippets that can be invoked explicitly or in response to an event. In this demo, we are going to configure this action to be invoked in response to events fired by the `message-received-trigger`.
+## Map the action to the trigger with a rule
+We are going to configure this action to be invoked in response to events fired by the `message-received-trigger` when messages are received on the Message Hub topic.
 
-To do this, we are going to create a rule, which maps triggers to actions. Once this rule is created, the `process-message` action will be executed whenever the `message-received-trigger` is fired in response to new messages being written to the Kafka stream.
+To do this, we create a rule, which maps triggers to actions. Once this rule is created, the `process-message` action will be executed whenever the `message-received-trigger` is fired in response to new messages being written to the Kafka stream.
 
 ```bash
 wsk rule create log-message-rule message-received-trigger process-message
