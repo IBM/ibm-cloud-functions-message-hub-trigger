@@ -118,6 +118,9 @@ wsk trigger delete message-received-trigger
 
 # Remove actions
 wsk action delete process-message
+
+# Remove package
+wsk package delete Bluemix_${KAFKA_INSTANCE}_Credentials-1
 ```
 
 # Troubleshooting
