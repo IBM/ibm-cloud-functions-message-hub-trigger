@@ -1,19 +1,19 @@
-# OpenWhisk building block - Message Hub Trigger
-Create Message Hub data processing apps with Apache OpenWhisk on IBM Bluemix. This tutorial should take about 5 minutes to complete. After this, move on to more complex serverless applications such as those tagged [_openwhisk-hands-on-demo_](https://github.com/search?q=topic%3Aopenwhisk-hands-on-demo+org%3AIBM&type=Repositories).
+# Triggering IBM Cloud Functions with Message Hub records
+Create Message Hub data processing apps with IBM Cloud Functions powered by Apache OpenWhisk. This tutorial should take about 5 minutes to complete. After this, move on to more complex serverless applications such as those tagged [_openwhisk-hands-on-demo_](https://github.com/search?q=topic%3Aopenwhisk-hands-on-demo+org%3AIBM&type=Repositories).
 
 ![Sample Architecture](openwhisk-message-hub-trigger.png)
 
-If you're not familiar with the OpenWhisk programming model [try the action, trigger, and rule sample first](https://github.com/IBM/openwhisk-action-trigger-rule). [You'll need a Bluemix account and the latest OpenWhisk command line tool](https://github.com/IBM/openwhisk-action-trigger-rule/blob/master/docs/OPENWHISK.md).
+If you're not familiar with the Cloud Functions/OpenWhisk programming model [try the action, trigger, and rule sample first](https://github.com/IBM/openwhisk-action-trigger-rule). [You'll need an IBM Cloud account and the latest OpenWhisk (`wsk`) or IBM Cloud command line plugin (`bx wsk`)](https://github.com/IBM/openwhisk-action-trigger-rule/blob/master/docs/OPENWHISK.md).
 
 This example shows how to create an action that consumes Message Hub (Apache Kafka) messages (records).
 
 1. [Configure Message Hub](#1-configure-message-hub)
-2. [Create OpenWhisk actions, triggers, and rules](#2-create-openwhisk-actions-triggers-and-rules)
+2. [Create Cloud Function actions, triggers, and rules](#2-create-cloud-function-actions-triggers-and-rules)
 3. [Clean up](#3-clean-up)
 
 # 1. Configure Message Hub
 ## Provision an IBM Message Hub service instance
-Log into Bluemix, provision a [Message Hub](https://console.ng.bluemix.net/catalog/services/message-hub) instance, and name it `openwhisk-kafka`. On the "Manage" tab of the Message Hub console create a topic named "cats-topic". Set the corresponding names as environment variables in a terminal window:
+Log into the IBM Cloud, provision a [Message Hub](https://console.ng.bluemix.net/catalog/services/message-hub) instance, and name it `openwhisk-kafka`. On the "Manage" tab of the Message Hub console create a topic named "cats-topic". Set the corresponding names as environment variables in a terminal window:
 
 ```bash
 export KAFKA_INSTANCE="openwhisk-kafka"
@@ -21,16 +21,16 @@ export KAFKA_TOPIC="cats-topic"
 ```
 
 ## Import the service credentials into the OpenWhisk environment
-We will make use of the built-in [OpenWhisk Kafka package](https://github.com/apache/incubator-openwhisk-package-kafka#producing-messages-to-message-hub), which contains a set of actions and feeds that integrate with both Apache Kafka and IBM Message Hub (based on Kafka).
+We will make use of the built-in [Cloud Functions Kafka package](https://github.com/apache/incubator-openwhisk-package-kafka#producing-messages-to-message-hub), which contains a set of actions and feeds that integrate with both Apache Kafka and IBM Message Hub (based on Kafka).
 
-On Bluemix, this package can be automatically configured with the credentials and connection information from the Message Hub instance we provisioned above. We make it available by refreshing our list of packages.
+With Cloud Functions on the IBM Cloud, this package can be automatically configured with the credentials and connection information from the Message Hub instance we provisioned above. We make it available by refreshing our list of packages.
 
 ```bash
-# Ensures the IBM Message Hub credentials are available to OpenWhisk.
+# Ensures the IBM Message Hub credentials are available to Cloud Functions.
 wsk package refresh
 ```
 
-# 2. Create OpenWhisk actions, triggers, and rules
+# 2. Create Cloud Function actions, triggers, and rules
 ## Attach a trigger to the Message Hub topic
 Triggers can be explicitly fired by a user or fired on behalf of a user by an external event source, such as a feed. Use the code below to create a trigger to fire events when messages are received using the "messageHubFeed" provided in the Message Hub package.
 
@@ -43,7 +43,7 @@ wsk trigger create message-received-trigger \
 ```
 
 ## Create an action to process messages from the topic
-Create a file named `process-message.js`. This file will define an OpenWhisk action written as a JavaScript function. This function will print out messages that are received from Kafka. For this example, we are expecting a stream of messages that contain a `cat` object with `name` and `color` fields.
+Create a file named `process-message.js`. This file will define an action written as a JavaScript function. This function will print out messages that are received from Kafka. For this example, we are expecting a stream of messages that contain a `cat` object with `name` and `color` fields.
 
 ```javascript
 function main(params) {
@@ -72,7 +72,7 @@ function main(params) {
 }
 ```
 
-Create an OpenWhisk action from the JavaScript function.
+Deploy an IBM Cloud Function from the JavaScript file.
 ```bash
 wsk action create process-message process-message.js
 ```
@@ -87,7 +87,7 @@ wsk rule create log-message-rule message-received-trigger process-message
 ```
 
 ## Enter data to fire a change
-Begin streaming the OpenWhisk activation log in a second terminal window.
+Begin streaming the Cloud Functions activation log in a second terminal window.
 ```bash
 wsk activation poll
 ```
@@ -103,7 +103,7 @@ wsk action invoke Bluemix_${KAFKA_INSTANCE}_Credentials-1/messageHubProduce \
   --param base64DecodeValue true
 ```
 
-View the OpenWhisk log to look for the change notification. You should see activation records for the producing action, the rule, the trigger, and the consuming action.
+View the log to look for the change notification. You should see activation records for the producing action, the rule, the trigger, and the consuming action.
 
 # 3. Clean up
 ## Remove the rule, trigger, action, and package
@@ -124,7 +124,7 @@ wsk package delete Bluemix_${KAFKA_INSTANCE}_Credentials-1
 ```
 
 # Troubleshooting
-Check for errors first in the OpenWhisk activation log. Tail the log on the command line with `wsk activation poll` or drill into details visually with the [monitoring console on Bluemix](https://console.ng.bluemix.net/openwhisk/dashboard).
+Check for errors first in the Cloud Functions activation log. Tail the log on the command line with `wsk activation poll` or drill into details visually with the [Cloud Functions monitoring console](https://console.ng.bluemix.net/openwhisk/dashboard).
 
 If the error is not immediately obvious, make sure you have the [latest version of the `wsk` CLI installed](https://console.ng.bluemix.net/openwhisk/learn/cli). If it's older than a few weeks, download an update.
 ```bash
