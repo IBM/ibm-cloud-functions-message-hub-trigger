@@ -13,7 +13,7 @@ This example shows how to create an action that consumes Message Hub (Apache Kaf
 
 # 1. Configure Message Hub
 ## Provision an IBM Message Hub service instance
-Log into the IBM Cloud, provision a [Message Hub](https://console.ng.bluemix.net/catalog/services/message-hub) instance, and name it `openwhisk-kafka`. On the "Manage" tab of the Message Hub console create a topic named "cats-topic". Set the corresponding names as environment variables in a terminal window:
+Log into the IBM Cloud, provision a [Message Hub](https://console.ng.bluemix.net/catalog/services/message-hub) instance, and name it `openwhisk-kafka`. On the `Manage` tab of the Message Hub console create a topic named `cats-topic`. Set the corresponding names as environment variables in a terminal window:
 
 ```bash
 export KAFKA_INSTANCE="openwhisk-kafka"
